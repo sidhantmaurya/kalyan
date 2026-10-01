@@ -1,14 +1,22 @@
 /**
- * Main frontend behaviors & interactivity for KalyanSetu
- * - Navbar scroll state & active links
- * - Mobile drawer open/close
- * - Reveal on scroll (IntersectionObserver)
- * - Smooth anchor scrolling
- * - Modal management (open on demand, accessible ESC / click outside)
- * - Real backend connection for Login & Signup (fetch -> /api/auth/*)
- * - User session persistence (localStorage) & dynamic auth UI
- * - Real backend connection for Contact Messages (fetch -> /api/contact)
- * - Real backend connection for Newsletter Subscriptions (fetch -> /api/newsletter)
+ * KalyanSetu - Main Frontend Script & Authentication Logic
+ *
+ * Core Features:
+ *  1. Navigation scroll styling & mobile drawer toggling
+ *  2. Scroll animations (IntersectionObserver)
+ *  3. Complete Login & Authentication Logic:
+ *     - Permanent "Login" button in navbar & mobile menu
+ *     - Modal state control (open, close on ESC / backdrop click)
+ *     - Tab switching between Login and Sign Up
+ *     - Client-side validation (email format, non-empty password)
+ *     - API integration (POST /api/auth/login) with loading indicator
+ *     - In-modal error banners for wrong credentials
+ *     - Session persistence in localStorage ('ks_user')
+ *     - Dynamic header badge ("Hi, [Name]") & one-click Logout
+ *     - Global testing helpers (window.ksAuth)
+ *  4. Signup API integration (POST /api/auth/signup)
+ *  5. Contact form submission to SQLite (POST /api/contact)
+ *  6. Newsletter subscription to SQLite (POST /api/newsletter)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   drawer?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeDrawer));
 
   /* ==========================================================
-     2. Scroll Reveals & Smooth Scrolling
+     2. Scroll Reveals & Smooth Anchor Scrolling
      ========================================================== */
   const revealObserver = new IntersectionObserver(
     (entries, obs) => {
@@ -64,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ==========================================================
-     3. Helper Functions for Form Validation
+     3. Helper Functions & Input Validation
      ========================================================== */
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim().toLowerCase());
@@ -95,8 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ==========================================================
-     4. Auth State & Dynamic Navbar Integration
+     4. Core Authentication Logic (Login, Session, UI Sync)
      ========================================================== */
+  const loginPopup = document.getElementById('login-popup');
+  const tabLogin = document.getElementById('tab-login');
+  const tabSignup = document.getElementById('tab-signup');
+  const formLogin = document.getElementById('login-form');
+  const formSignup = document.getElementById('signup-form');
+  const loginClose = document.getElementById('login-close');
+  const loginGuest = document.getElementById('login-guest');
+
+  // Retrieve current active user session
   const getCurrentUser = () => {
     try {
       const raw = localStorage.getItem('ks_user');
@@ -106,31 +123,97 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Switch between Login and Signup tabs
+  const setAuthTab = (isSignup = false) => {
+    if (tabLogin && tabSignup && formLogin && formSignup) {
+      tabLogin.classList.toggle('active', !isSignup);
+      tabSignup.classList.toggle('active', isSignup);
+      formLogin.hidden = isSignup;
+      formSignup.hidden = !isSignup;
+      clearModalAlerts();
+    }
+  };
+
+  // Open the Login/Signup popup modal
+  window.openAuthModal = (signupMode = false) => {
+    if (!loginPopup) return;
+    loginPopup.classList.add('open');
+    document.body.classList.add('login-lock');
+    setAuthTab(signupMode);
+    clearModalAlerts();
+    setTimeout(() => {
+      const inputToFocus = signupMode
+        ? document.getElementById('signup-name')
+        : document.getElementById('login-email');
+      inputToFocus?.focus();
+    }, 50);
+  };
+
+  // Close the popup modal
+  window.closeAuthModal = () => {
+    if (!loginPopup) return;
+    loginPopup.classList.remove('open');
+    document.body.classList.remove('login-lock');
+    clearModalAlerts();
+  };
+
+  // Show status banner inside modal (green for success, red for errors)
+  const showModalBanner = (form, message, isError = true) => {
+    let banner = form.querySelector('.auth-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'auth-banner';
+      banner.style.padding = '10px 14px';
+      banner.style.borderRadius = '6px';
+      banner.style.fontSize = '13px';
+      banner.style.marginBottom = '14px';
+      banner.style.textAlign = 'left';
+      banner.style.lineHeight = '1.4';
+      form.insertBefore(banner, form.firstChild);
+    }
+    banner.style.backgroundColor = isError ? 'rgba(192, 57, 43, 0.12)' : 'rgba(111, 141, 78, 0.15)';
+    banner.style.color = isError ? '#b00020' : '#27ae60';
+    banner.style.border = `1px solid ${isError ? 'rgba(192, 57, 43, 0.4)' : 'rgba(111, 141, 78, 0.5)'}`;
+    banner.textContent = message;
+  };
+
+  const clearModalAlerts = () => {
+    document.querySelectorAll('.auth-banner').forEach((el) => el.remove());
+    document.querySelectorAll('.input-feedback').forEach((el) => el.remove());
+    document.querySelectorAll('.login-card input').forEach((inp) => {
+      inp.style.borderColor = 'rgba(201, 162, 39, 0.65)';
+    });
+  };
+
+  // Render navigation buttons (Login button vs Logged-In User badge)
   const updateAuthUI = () => {
     const user = getCurrentUser();
-    const navLinks = document.querySelector('.nav-links');
+    const navInner = document.querySelector('.nav-inner');
     const drawer = document.querySelector('.mobile-drawer');
 
-    document.querySelectorAll('.auth-nav-action').forEach((el) => el.remove());
+    // Remove old auth badges
+    document.querySelectorAll('.auth-header-slot').forEach((el) => el.remove());
 
     if (user) {
-      if (navLinks) {
-        const userBadge = document.createElement('div');
-        userBadge.className = 'auth-nav-action';
-        userBadge.style.display = 'inline-flex';
-        userBadge.style.alignItems = 'center';
-        userBadge.style.gap = '10px';
+      // 1. DESKTOP HEADER (Logged In State)
+      if (navInner) {
+        const slot = document.createElement('div');
+        slot.className = 'auth-header-slot';
+        slot.style.display = 'inline-flex';
+        slot.style.alignItems = 'center';
+        slot.style.gap = '8px';
+        slot.style.marginLeft = 'auto';
 
         const greeting = document.createElement('span');
         greeting.style.color = 'var(--gold)';
         greeting.style.fontWeight = '700';
         greeting.style.fontSize = '14px';
-        greeting.textContent = `Hi, ${user.name.split(' ')[0]}`;
+        greeting.textContent = `👤 Hi, ${user.name.split(' ')[0]}`;
 
         const logoutBtn = document.createElement('button');
         logoutBtn.className = 'btn btn-ghost';
-        logoutBtn.style.padding = '6px 14px';
-        logoutBtn.style.minHeight = '34px';
+        logoutBtn.style.padding = '6px 12px';
+        logoutBtn.style.minHeight = '32px';
         logoutBtn.style.fontSize = '12px';
         logoutBtn.textContent = 'Logout';
         logoutBtn.addEventListener('click', () => {
@@ -138,131 +221,91 @@ document.addEventListener('DOMContentLoaded', () => {
           updateAuthUI();
         });
 
-        userBadge.appendChild(greeting);
-        userBadge.appendChild(logoutBtn);
-        navLinks.appendChild(userBadge);
+        slot.appendChild(greeting);
+        slot.appendChild(logoutBtn);
+
+        const navCta = navInner.querySelector('.nav-cta');
+        if (navCta) {
+          navInner.insertBefore(slot, navCta);
+        } else {
+          navInner.appendChild(slot);
+        }
       }
 
+      // 2. MOBILE DRAWER (Logged In State)
       if (drawer) {
-        const drawerUser = document.createElement('div');
-        drawerUser.className = 'auth-nav-action';
-        drawerUser.style.padding = '14px 4px';
-        drawerUser.style.borderBottom = '1px solid rgba(201, 162, 39, 0.35)';
+        const drawerSlot = document.createElement('div');
+        drawerSlot.className = 'auth-header-slot';
+        drawerSlot.style.padding = '14px 4px';
+        drawerSlot.style.marginBottom = '12px';
+        drawerSlot.style.borderBottom = '1px solid rgba(201, 162, 39, 0.35)';
 
-        drawerUser.innerHTML = `
-          <div style="font-weight:700;color:var(--navy);font-size:15px">Signed in as <strong>${user.name}</strong></div>
+        drawerSlot.innerHTML = `
+          <div style="font-weight:700;color:var(--navy);font-size:15px">Logged in: <strong>${user.name}</strong></div>
           <div style="font-size:13px;color:var(--muted)">${user.email}</div>
-          <button class="btn btn-ghost" style="width:100%;margin-top:10px;min-height:38px;font-size:13px">Logout</button>
+          <button class="btn btn-ghost" style="width:100%;margin-top:10px;min-height:36px;font-size:13px">Logout</button>
         `;
 
-        drawerUser.querySelector('button')?.addEventListener('click', () => {
+        drawerSlot.querySelector('button')?.addEventListener('click', () => {
           localStorage.removeItem('ks_user');
           updateAuthUI();
           closeDrawer();
         });
 
-        drawer.insertBefore(drawerUser, drawer.firstChild);
+        drawer.insertBefore(drawerSlot, drawer.firstChild);
       }
     } else {
-      if (navLinks) {
-        const loginLink = document.createElement('a');
-        loginLink.href = '#';
-        loginLink.className = 'auth-nav-action';
-        loginLink.textContent = 'Sign In';
-        loginLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          window.openAuthModal(false);
-        });
-        navLinks.appendChild(loginLink);
+      // 1. DESKTOP HEADER (Logged Out: Show Login Button)
+      if (navInner) {
+        const slot = document.createElement('div');
+        slot.className = 'auth-header-slot';
+        slot.style.marginLeft = 'auto';
+
+        const loginBtn = document.createElement('button');
+        loginBtn.className = 'btn btn-ghost';
+        loginBtn.style.padding = '7px 16px';
+        loginBtn.style.minHeight = '36px';
+        loginBtn.style.fontSize = '13px';
+        loginBtn.textContent = 'Login';
+        loginBtn.addEventListener('click', () => window.openAuthModal(false));
+
+        slot.appendChild(loginBtn);
+
+        const navCta = navInner.querySelector('.nav-cta');
+        if (navCta) {
+          navInner.insertBefore(slot, navCta);
+        } else {
+          navInner.appendChild(slot);
+        }
       }
 
+      // 2. MOBILE DRAWER (Logged Out: Show Login / Sign Up Button)
       if (drawer) {
-        const drawerLogin = document.createElement('a');
-        drawerLogin.href = '#';
-        drawerLogin.className = 'auth-nav-action';
-        drawerLogin.textContent = 'Sign In / Register';
-        drawerLogin.addEventListener('click', (e) => {
-          e.preventDefault();
+        const drawerSlot = document.createElement('div');
+        drawerSlot.className = 'auth-header-slot';
+        drawerSlot.style.paddingBottom = '12px';
+        drawerSlot.style.marginBottom = '12px';
+        drawerSlot.style.borderBottom = '1px solid rgba(201, 162, 39, 0.35)';
+
+        const drawerLoginBtn = document.createElement('button');
+        drawerLoginBtn.className = 'btn btn-ghost';
+        drawerLoginBtn.style.width = '100%';
+        drawerLoginBtn.textContent = 'Sign In / Register';
+        drawerLoginBtn.addEventListener('click', () => {
           closeDrawer();
           window.openAuthModal(false);
         });
-        drawer.insertBefore(drawerLogin, drawer.firstChild);
+
+        drawerSlot.appendChild(drawerLoginBtn);
+        drawer.insertBefore(drawerSlot, drawer.firstChild);
       }
     }
   };
 
-  updateAuthUI();
-
-  /* ==========================================================
-     5. Login & Signup Modal System (with Backend API Connection)
-     ========================================================== */
-  const loginPopup = document.getElementById('login-popup');
+  // Mount listeners on auth modal elements
   if (loginPopup) {
-    const tabLogin = document.getElementById('tab-login');
-    const tabSignup = document.getElementById('tab-signup');
-    const formLogin = document.getElementById('login-form');
-    const formSignup = document.getElementById('signup-form');
-    const loginClose = document.getElementById('login-close');
-    const loginGuest = document.getElementById('login-guest');
-
-    window.openAuthModal = (signupMode = false) => {
-      loginPopup.classList.add('open');
-      document.body.classList.add('login-lock');
-      showTab(signupMode);
-      clearModalMessages();
-      const firstInput = signupMode ? document.getElementById('signup-name') : document.getElementById('login-email');
-      firstInput?.focus();
-    };
-
-    window.closeAuthModal = () => {
-      loginPopup.classList.remove('open');
-      document.body.classList.remove('login-lock');
-      clearModalMessages();
-    };
-
-    const showTab = (signup = false) => {
-      if (tabLogin && tabSignup && formLogin && formSignup) {
-        tabLogin.classList.toggle('active', !signup);
-        tabSignup.classList.toggle('active', signup);
-        formLogin.hidden = signup;
-        formSignup.hidden = !signup;
-        clearModalMessages();
-      }
-    };
-
-    const setFormMessage = (form, text, isError = true) => {
-      let msgEl = form.querySelector('.auth-message');
-      if (!msgEl) {
-        msgEl = document.createElement('div');
-        msgEl.className = 'auth-message';
-        msgEl.style.padding = '10px 12px';
-        msgEl.style.borderRadius = '6px';
-        msgEl.style.fontSize = '13px';
-        msgEl.style.marginBottom = '14px';
-        msgEl.style.textAlign = 'left';
-        form.insertBefore(msgEl, form.firstChild);
-      }
-      msgEl.style.backgroundColor = isError ? 'rgba(192, 57, 43, 0.12)' : 'rgba(111, 141, 78, 0.15)';
-      msgEl.style.color = isError ? '#b00020' : '#27ae60';
-      msgEl.style.border = `1px solid ${isError ? 'rgba(192, 57, 43, 0.4)' : 'rgba(111, 141, 78, 0.5)'}`;
-      msgEl.textContent = text;
-    };
-
-    const clearModalMessages = () => {
-      document.querySelectorAll('.auth-message').forEach((el) => el.remove());
-      document.querySelectorAll('.input-feedback').forEach((el) => el.remove());
-      document.querySelectorAll('.login-card input').forEach((inp) => {
-        inp.style.borderColor = 'rgba(201, 162, 39, 0.65)';
-      });
-    };
-
-    tabLogin?.addEventListener('click', () => showTab(false));
-    tabSignup?.addEventListener('click', () => showTab(true));
-
-    if (!getCurrentUser() && !sessionStorage.getItem('ks-login-shown')) {
-      window.openAuthModal(false);
-      sessionStorage.setItem('ks-login-shown', '1');
-    }
+    tabLogin?.addEventListener('click', () => setAuthTab(false));
+    tabSignup?.addEventListener('click', () => setAuthTab(true));
 
     loginClose?.addEventListener('click', window.closeAuthModal);
     loginGuest?.addEventListener('click', window.closeAuthModal);
@@ -284,130 +327,27 @@ document.addEventListener('DOMContentLoaded', () => {
       input.addEventListener('input', () => clearInputError(input));
     });
 
-    formLogin?.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      clearModalMessages();
-
-      const emailInput = document.getElementById('login-email');
-      const passInput = document.getElementById('login-pass');
-      const submitBtn = formLogin.querySelector('button[type="submit"]');
-
-      let valid = true;
-      if (!isValidEmail(emailInput.value)) {
-        showInputError(emailInput, 'Please enter a valid email address.');
-        valid = false;
-      }
-      if (!passInput.value.trim()) {
-        showInputError(passInput, 'Password is required.');
-        valid = false;
-      }
-      if (!valid) return;
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Logging in...';
-
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: emailInput.value.trim(),
-            password: passInput.value
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setFormMessage(formLogin, data.error || 'Login failed. Please check your credentials.', true);
-          return;
-        }
-
-        localStorage.setItem('ks_user', JSON.stringify(data.user));
-        setFormMessage(formLogin, `Welcome back, ${data.user.name}!`, false);
-        updateAuthUI();
-
-        setTimeout(() => {
-          window.closeAuthModal();
-          formLogin.reset();
-        }, 800);
-      } catch (err) {
-        setFormMessage(formLogin, 'Network error. Please check your internet connection.', true);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
-      }
-    });
-
-    formSignup?.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      clearModalMessages();
-
-      const nameInput = document.getElementById('signup-name');
-      const emailInput = document.getElementById('signup-email');
-      const passInput = document.getElementById('signup-pass');
-      const pass2Input = document.getElementById('signup-pass2');
-      const submitBtn = formSignup.querySelector('button[type="submit"]');
-
-      let valid = true;
-      if (nameInput.value.trim().length < 2) {
-        showInputError(nameInput, 'Please enter your full name (at least 2 letters).');
-        valid = false;
-      }
-      if (!isValidEmail(emailInput.value)) {
-        showInputError(emailInput, 'Please enter a valid email address.');
-        valid = false;
-      }
-      if (passInput.value.length < 6) {
-        showInputError(passInput, 'Password must be at least 6 characters.');
-        valid = false;
-      }
-      if (passInput.value !== pass2Input.value) {
-        showInputError(pass2Input, 'Passwords do not match. Please verify.');
-        valid = false;
-      }
-      if (!valid) return;
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating account...';
-
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: nameInput.value.trim(),
-            email: emailInput.value.trim(),
-            password: passInput.value
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setFormMessage(formSignup, data.error || 'Failed to create account.', true);
-          return;
-        }
-
-        localStorage.setItem('ks_user', JSON.stringify(data.user));
-        setFormMessage(formSignup, `Account created! Welcome to KalyanSetu, ${data.user.name}.`, false);
-        updateAuthUI();
-
-        setTimeout(() => {
-          window.closeAuthModal();
-          formSignup.reset();
-        }, 1000);
-      } catch (err) {
-        setFormMessage(formSignup, 'Network error. Please try again.', true);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create Account';
-      }
-    });
+    // Form submissions for Login & Signup are handled with client-side validation in js/auth.js
   }
 
+  // Initialize Auth UI state on page load
+  updateAuthUI();
+  window.addEventListener('ks:auth-change', updateAuthUI);
+
+  // Expose global helper for browser console testing
+  window.ksAuth = {
+    getUser: getCurrentUser,
+    openLogin: () => window.openAuthModal(false),
+    openSignup: () => window.openAuthModal(true),
+    logout: () => {
+      localStorage.removeItem('ks_user');
+      updateAuthUI();
+      console.log('✓ Successfully logged out.');
+    }
+  };
+
   /* ==========================================================
-     6. Contact Form (Direct Backend SQLite Integration)
+     5. Contact Form Submission (SQLite Integration)
      ========================================================== */
   const contactForm = document.querySelector('#contact-form');
   if (contactForm) {
@@ -445,8 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!valid) return;
 
       try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Sending Message...';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sending Message...';
+        }
 
         const res = await fetch('/api/contact', {
           method: 'POST',
@@ -475,14 +417,16 @@ document.addEventListener('DOMContentLoaded', () => {
         status.style.color = '#b00020';
         status.textContent = 'Network error. Please try again.';
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Send Message →';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send Message →';
+        }
       }
     });
   }
 
   /* ==========================================================
-     7. Footer Newsletter (Direct Backend SQLite Integration)
+     6. Footer Newsletter Submission (SQLite Integration)
      ========================================================== */
   document.querySelectorAll('.footer-links form').forEach((form) => {
     form.addEventListener('submit', async (ev) => {

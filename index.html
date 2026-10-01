@@ -59,7 +59,10 @@
           <input id="login-email" name="email" type="email" placeholder="you@example.com" required>
 
           <label for="login-pass">Password</label>
-          <input id="login-pass" name="password" type="password" placeholder="••••••••" required>
+          <div class="password-field-wrapper" style="position:relative;width:100%">
+            <input id="login-pass" name="password" type="password" placeholder="••••••••" required style="padding-right:65px">
+            <button type="button" class="toggle-password-btn" id="toggle-login-pass" aria-label="Show or hide password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gold,#c9a227);font-size:12px;font-weight:700;cursor:pointer;padding:4px 6px;text-transform:uppercase">Show</button>
+          </div>
 
           <button type="submit" class="btn btn-primary login-btn">Login</button>
         </form>
@@ -73,10 +76,16 @@
           <input id="signup-email" name="email" type="email" placeholder="you@example.com" required>
 
           <label for="signup-pass">Password</label>
-          <input type="password" id="signup-pass" name="password" placeholder="Create a password" required>
+          <div class="password-field-wrapper" style="position:relative;width:100%">
+            <input type="password" id="signup-pass" name="password" placeholder="Create a password" required style="padding-right:65px">
+            <button type="button" class="toggle-password-btn" id="toggle-signup-pass" aria-label="Show or hide password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gold,#c9a227);font-size:12px;font-weight:700;cursor:pointer;padding:4px 6px;text-transform:uppercase">Show</button>
+          </div>
 
           <label for="signup-pass2">Confirm Password</label>
-          <input type="password" id="signup-pass2" name="password_confirm" placeholder="Repeat password" required>
+          <div class="password-field-wrapper" style="position:relative;width:100%">
+            <input type="password" id="signup-pass2" name="password_confirm" placeholder="Repeat password" required style="padding-right:65px">
+            <button type="button" class="toggle-password-btn" id="toggle-signup-pass2" aria-label="Show or hide password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gold,#c9a227);font-size:12px;font-weight:700;cursor:pointer;padding:4px 6px;text-transform:uppercase">Show</button>
+          </div>
 
           <div class="signup-error" aria-live="polite" style="color:#b00020;margin-top:8px"></div>
 
@@ -387,6 +396,7 @@
       </div>
     </footer>
 
+    <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
