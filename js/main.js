@@ -131,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
       formLogin.hidden = isSignup;
       formSignup.hidden = !isSignup;
       clearModalAlerts();
+      const card = document.querySelector('.login-card');
+      if (card) card.scrollTop = 0;
+      if (loginPopup) loginPopup.scrollTop = 0;
     }
   };
 
@@ -262,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.style.marginLeft = 'auto';
 
         const loginBtn = document.createElement('button');
-        loginBtn.className = 'btn btn-ghost';
+        loginBtn.className = 'btn btn-nav-login';
         loginBtn.style.padding = '7px 16px';
         loginBtn.style.minHeight = '36px';
         loginBtn.style.fontSize = '13px';
