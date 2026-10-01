@@ -1,18 +1,19 @@
 /**
- * KalyanSetu Backend Server
- * Express + SQLite + Vite Middlewares
- * Provides:
- *  - POST /api/auth/signup (with bcrypt password hashing)
- *  - POST /api/auth/login (verifies hashed password)
- *  - POST /api/contact (stores inquiries in SQLite database)
- *  - POST /api/newsletter (stores subscriber emails in SQLite database)
- *  - GET  /api/stats (community numbers & activity summary)
- *  - GET  /api/health (system status)
- *  - Serves static pages and assets through Vite middleware
+ * KalyanSetu Full-Stack Server (Production & Development)
+ * Express + SQLite + Vite
+ *
+ * Features:
+ *  - Production static serving (dist/) with cache headers
+ *  - Development middleware mode via Vite
+ *  - Security headers (nosniff, sameorigin, referrer-policy)
+ *  - Graceful SQLite database shutdown
+ *  - Authentication API (Signup & Login with bcrypt)
+ *  - Form submissions API (Contacts & Newsletter)
+ *  - Community stats API
  */
 
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
+import path from 'node:path';
 import bcrypt from 'bcryptjs';
 // @ts-ignore - db.js is an ES module
 import { db, dbOps } from './db.js';
@@ -20,16 +21,29 @@ import { db, dbOps } from './db.js';
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  // Parse incoming JSON request bodies
-  app.use(express.json());
-
-  // Health check endpoint
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', service: 'KalyanSetu Backend' });
+  // 1. Basic Security Headers
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
   });
 
-  // SIGNUP ROUTE: Creates a new user with hashed password
+  // 2. Parse incoming JSON payloads (max 1MB)
+  app.use(express.json({ limit: '1mb' }));
+
+  // 3. API Endpoints
+  app.get('/api/health', (_req, res) => {
+    res.json({
+      status: 'ok',
+      service: 'KalyanSetu Backend',
+      environment: isProduction ? 'production' : 'development'
+    });
+  });
+
+  // SIGNUP ROUTE: Creates a new user with bcrypt password hashing
   app.post('/api/auth/signup', async (req, res) => {
     try {
       const { name, email, password } = req.body;
@@ -54,7 +68,6 @@ async function startServer() {
 
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(password, salt);
-
       const newUser = dbOps.createUser(name, email, passwordHash);
 
       return res.status(201).json({
@@ -72,7 +85,7 @@ async function startServer() {
     }
   });
 
-  // LOGIN ROUTE: Verifies credentials against hashed password in SQLite
+  // LOGIN ROUTE: Validates credentials against hashed passwords in SQLite
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -106,7 +119,7 @@ async function startServer() {
     }
   });
 
-  // CONTACT ROUTE: Persists message into SQLite contacts table
+  // CONTACT ROUTE: Persists messages to SQLite contacts table
   app.post('/api/contact', (req, res) => {
     try {
       const { name, email, phone, reason, message } = req.body;
@@ -139,7 +152,7 @@ async function startServer() {
     }
   });
 
-  // NEWSLETTER ROUTE: Persists subscriber into SQLite subscribers table
+  // NEWSLETTER ROUTE: Persists subscriber emails to SQLite subscribers table
   app.post('/api/newsletter', (req, res) => {
     try {
       const { email } = req.body;
@@ -160,7 +173,7 @@ async function startServer() {
     }
   });
 
-  // STATS ROUTE: Community counts
+  // STATS ROUTE: Live database counts
   app.get('/api/stats', (_req, res) => {
     try {
       const userCountRow = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
@@ -178,16 +191,45 @@ async function startServer() {
     }
   });
 
-  // Mount Vite middlewares so frontend HTML, CSS & JS are served on port 3000
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'spa'
-  });
-  app.use(vite.middlewares);
+  // 4. Static Frontend Delivery
+  if (isProduction) {
+    const distPath = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(distPath, { maxAge: '1d' }));
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✓ KalyanSetu Server running at http://localhost:${PORT}`);
+    // Fallback for HTML routing
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa'
+    });
+    app.use(vite.middlewares);
+  }
+
+  // 5. Start HTTP Listener
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✓ KalyanSetu Server running on port ${PORT} [${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}]`);
   });
+
+  // 6. Graceful Shutdown (safely closes SQLite transactions)
+  const shutdown = () => {
+    console.log('\nClosing KalyanSetu server & SQLite database...');
+    server.close(() => {
+      try {
+        db.close();
+        console.log('✓ SQLite database safely closed.');
+      } catch (e) {
+        console.error('Error closing database:', e);
+      }
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 startServer();
