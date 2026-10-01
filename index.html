@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>KalyanSetu - Affordable Food, Dignified Lives</title>
+    <meta name="description" content="A for-profit social impact initiative making nutritious, affordable meals accessible to students, workers, drivers, and low-income families across India.">
+    <meta property="og:title" content="KalyanSetu - Affordable Food, Dignified Lives">
+    <meta property="og:description" content="A for-profit social impact initiative making nutritious, affordable meals accessible to students, workers, drivers, and low-income families across India.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to main content</a>
+
+    <header class="navbar nav-hero">
+      <div class="container nav-inner">
+        <a class="logo" href="index.html">Kalyan<span>Setu</span></a>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a class="active" href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="founder.html">Founder</a>
+          <a href="people.html">Who We Serve</a>
+          <a href="progress.html">Progress</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+        <a class="btn btn-primary nav-cta" href="contact.html">Support Our Mission</a>
+        <button class="menu-toggle" aria-label="Open navigation menu">☰</button>
+      </div>
+    </header>
+
+    <div class="mobile-drawer">
+      <button class="close-menu" aria-label="Close navigation menu">×</button>
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="founder.html">Founder</a>
+      <a href="people.html">Who We Serve</a>
+      <a href="progress.html">Progress</a>
+      <a href="contact.html">Contact</a>
+      <a class="btn btn-primary" href="contact.html">Support Our Mission</a>
+    </div>
+
+    <!-- LOGIN & SIGNUP POPUP MODAL -->
+    <div class="login-overlay" id="login-popup" role="dialog" aria-modal="true" aria-label="Login or sign up">
+      <div class="login-card">
+        <button class="login-close" id="login-close" aria-label="Close">×</button>
+        <div class="login-logo">Kalyan<span>Setu</span></div>
+        <p class="login-sub">Affordable Food. Dignified Lives.</p>
+
+        <div class="auth-tabs" role="tablist" aria-label="Authentication tabs">
+          <button class="auth-tab active" id="tab-login" role="tab" aria-selected="true" aria-controls="login-form">Login</button>
+          <button class="auth-tab" id="tab-signup" role="tab" aria-selected="false" aria-controls="signup-form">Sign Up</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="login-form" class="auth-form" role="tabpanel">
+          <label for="login-email">Email</label>
+          <input id="login-email" name="email" type="email" placeholder="you@example.com" required>
+
+          <label for="login-pass">Password</label>
+          <input id="login-pass" name="password" type="password" placeholder="••••••••" required>
+
+          <button type="submit" class="btn btn-primary login-btn">Login</button>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form id="signup-form" class="auth-form" hidden role="tabpanel">
+          <label for="signup-name">Full Name</label>
+          <input id="signup-name" name="name" type="text" placeholder="Your name" required>
+
+          <label for="signup-email">Email</label>
+          <input id="signup-email" name="email" type="email" placeholder="you@example.com" required>
+
+          <label for="signup-pass">Password</label>
+          <input type="password" id="signup-pass" name="password" placeholder="Create a password" required>
+
+          <label for="signup-pass2">Confirm Password</label>
+          <input type="password" id="signup-pass2" name="password_confirm" placeholder="Repeat password" required>
+
+          <div class="signup-error" aria-live="polite" style="color:#b00020;margin-top:8px"></div>
+
+          <button type="submit" class="btn btn-primary login-btn">Create Account</button>
+        </form>
+
+        <button class="login-guest" id="login-guest">Continue as guest</button>
+      </div>
+    </div>
+
+    <main id="main">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy reveal">
+            <div class="section-label">Serving Nourishment · Building Connection</div>
+            <div class="divider"></div>
+            <h1>Food is not just fuel.<br>It's dignity, energy<br>and hope.</h1>
+            <p class="lead">Every day, millions of people — students, workers, drivers, and many others — spend long hours away from home. Finding a simple, healthy and affordable meal should not be this hard.</p>
+            <div class="quote">“Good food should not be a luxury.”</div>
+            <div class="actions">
+              <a class="btn btn-primary" href="about.html">Our Story</a>
+              <a class="btn btn-ghost" href="progress.html">See Progress</a>
+            </div>
+          </div>
+
+          <div class="hero-image reveal">
+            <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=85" alt="Warm Indian meal served at a community table">
+            <div class="badge">Real Food. Real People. A Stronger Tomorrow.</div>
+          </div>
+        </div>
+        <div class="wave"></div>
+      </section>
+
+      <section class="section alt">
+        <div class="container problem reveal">
+          <div class="center">
+            <div class="section-label">The Problem</div>
+            <div class="divider"></div>
+            <h2>Millions go hungry not from shortage —<br>but from unaffordability.</h2>
+          </div>
+          <p>For many people, food is not simply a matter of preference or convenience. There are people who struggle to afford even a basic, nourishing meal. Students managing tight budgets, daily-wage workers, drivers spending all day on the road, and low-income families — all face the same invisible barrier: the price of a dignified meal.</p>
+          <blockquote>“Because no one should have to go without a nourishing meal simply because they cannot afford it.”</blockquote>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container two-col">
+          <div class="reveal">
+            <div class="section-label">Our Solution</div>
+            <div class="divider"></div>
+            <h2>A sustainable system — not just charity.</h2>
+            <p>The vision goes beyond providing food at a lower price. It is about making nourishment more accessible, maintaining trust and quality, and creating a system that can grow sustainably rather than depending only on short-term charity.</p>
+            <p>Kalyan Setu is being built with those people at the centre of its purpose.</p>
+          </div>
+
+          <div class="pillars stagger">
+            <div class="pillar">
+              <div class="icon">🌿</div>
+              <h3>Nourishing</h3>
+              <p>Real Nutrition. Real Energy.</p>
+            </div>
+            <div class="pillar">
+              <div class="icon">₹</div>
+              <h3>Affordable</h3>
+              <p>Good Food. Within Reach.</p>
+            </div>
+            <div class="pillar">
+              <div class="icon">⌖</div>
+              <h3>Accessible</h3>
+              <p>Easy to Find. Easier to Trust.</p>
+            </div>
+            <div class="pillar">
+              <div class="icon">♥</div>
+              <h3>For Everyone</h3>
+              <p>Because no one should be left hungry.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="center reveal">
+            <div class="section-label">Who Kalyan Setu Is For</div>
+            <div class="divider"></div>
+            <h2>We are building for those who keep life moving.</h2>
+          </div>
+
+          <div class="cards stagger mt-35">
+            <article class="number-card">
+              <div class="number">01</div>
+              <div>
+                <h3>People Facing Food Insecurity</h3>
+                <p>People who may struggle to afford even basic nourishing meals.</p>
+              </div>
+            </article>
+            <article class="number-card">
+              <div class="number">02</div>
+              <div>
+                <h3>Students</h3>
+                <p>Affordable food for students managing limited budgets and life away from home.</p>
+              </div>
+            </article>
+            <article class="number-card">
+              <div class="number">03</div>
+              <div>
+                <h3>Workers</h3>
+                <p>Accessible nourishment for people working long hours and managing everyday expenses.</p>
+              </div>
+            </article>
+            <article class="number-card">
+              <div class="number">04</div>
+              <div>
+                <h3>Drivers & Daily Workers</h3>
+                <p>People who spend most of their day working outside and often depend on affordable food options.</p>
+              </div>
+            </article>
+            <article class="number-card">
+              <div class="number">05</div>
+              <div>
+                <h3>People Living Away From Home</h3>
+                <p>Affordable and dependable food for people who cannot easily access home-cooked meals.</p>
+              </div>
+            </article>
+            <article class="number-card">
+              <div class="number">06</div>
+              <div>
+                <h3>Low-Income Families</h3>
+                <p>Food solutions designed with affordability and everyday dignity in mind.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="center reveal">
+            <div class="section-label">How It Works</div>
+            <div class="divider"></div>
+            <h2>Simple. Accessible. Dignified.</h2>
+          </div>
+          <div class="steps stagger mt-35">
+            <div class="step">
+              <div class="icon">01</div>
+              <h3>Sourcing Quality Food</h3>
+              <p>We source fresh, nutritious ingredients at minimum cost.</p>
+            </div>
+            <div class="step">
+              <div class="icon">02</div>
+              <h3>Preparing Hygienically</h3>
+              <p>Every meal is prepared with hygiene and quality standards.</p>
+            </div>
+            <div class="step">
+              <div class="icon">03</div>
+              <h3>Serving Affordably</h3>
+              <p>Reaching students, workers, and families at prices they can afford.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section navy-section">
+        <div class="container">
+          <div class="mission-grid">
+            <div class="mission reveal">
+              <div class="section-label">Our Mission</div>
+              <div class="divider"></div>
+              <p>To provide 1-grade quality food at the minimum possible cost and make it accessible to everyone, especially the underprivileged.</p>
+            </div>
+            <div class="mission reveal">
+              <div class="section-label">Our Vision</div>
+              <div class="divider"></div>
+              <p>To create a society where every individual, regardless of their income, can enjoy a healthy, wholesome and dignified meal every day.</p>
+            </div>
+          </div>
+          <div class="navy-quote">“Nourishment should never be a privilege of income.”<br><small>— Divyansh Rai, Founder</small></div>
+        </div>
+      </section>
+
+      <section class="section alt">
+        <div class="container">
+          <div class="center reveal">
+            <div class="section-label">Where We Stand Today</div>
+            <div class="divider"></div>
+            <h2>We're moving — one step at a time.</h2>
+            <p>KalyanSetu is in its early stage. Here's exactly how far we've come and what's next on our path.</p>
+          </div>
+
+          <div class="progress-grid mt-35">
+            <div class="progress-list stagger">
+              <h3>What's Done</h3>
+              <div class="milestone"><span class="check">✓</span><span>Idea and concept fully developed</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Brand identity created (name, logo, visuals)</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Initial business planning completed</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Market and problem research done</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Target audience identified</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Founder-led development underway</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Trademark search — no active similar mark found</span></div>
+              <div class="milestone"><span class="check">✓</span><span>MCA account created</span></div>
+              <div class="milestone"><span class="check">✓</span><span>SPICe+ Part A — incorporation process initiated</span></div>
+              <div class="milestone"><span class="check">✓</span><span>NIC Code selected (56100)</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Company names shortlisted</span></div>
+              <div class="milestone"><span class="check">✓</span><span>Website development in progress</span></div>
+            </div>
+
+            <div class="progress-list pending stagger">
+              <h3>What Remains</h3>
+              <div class="milestone"><span class="clock">◷</span><span>Domain registration</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Website launch</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Full legal/company registration</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Pilot location identified</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Supplier network established</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Equipment procurement</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Core team formation</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Initial operations setup</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Marketing and outreach</span></div>
+              <div class="milestone"><span class="clock">◷</span><span>Pilot launch</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container founder-box">
+          <div class="founder-photo reveal">
+            <img class="avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=80" alt="Founder placeholder portrait">
+            <h3>Divyansh Rai</h3>
+            <div class="section-label">Founder, KalyanSetu</div>
+            <div class="quote">“Food can do more than just fill your stomach.”</div>
+          </div>
+
+          <div class="reveal">
+            <div class="section-label">The Person Behind Kalyan Setu</div>
+            <div class="divider"></div>
+            <h2>The Person Behind Kalyan Setu</h2>
+            <p>Divyansh Rai is the founder of Kalyan Setu, an early-stage initiative built around a simple belief: access to nourishing food should not depend entirely on a person's income.</p>
+            <p>He completed his 10+2 education and is currently pursuing his graduation at the Central University of Kerala. Alongside his academic journey, he is working on building Kalyan Setu with a long-term focus on affordable nourishment, dignity and sustainable community impact.</p>
+            <a class="btn btn-ghost" href="founder.html">Read Full Story</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section navy-section funding">
+        <div class="container reveal">
+          <div class="quote-mark">“</div>
+          <h2>Help us build the bridge<br>to nourishment.</h2>
+          <p>KalyanSetu is at an early stage. Your support — financial or otherwise — can help us go from vision to reality.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="contact.html">Support Our Mission</a>
+            <a class="btn btn-gold-ghost" href="contact.html">Partner With Us</a>
+          </div>
+          <p class="support-note">If you believe good food is a right, not a luxury — we'd love to hear from you.</p>
+        </div>
+      </section>
+
+      <section class="section alt center">
+        <div class="container reveal">
+          <div class="section-label">Get In Touch</div>
+          <div class="divider divider-center"></div>
+          <h2>Questions? Ideas? Let's talk.</h2>
+          <p>Whether you want to collaborate, partner, invest, or simply learn more — we're open to every conversation.</p>
+          <a class="btn btn-primary" href="contact.html">Contact Us</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container footer-grid">
+        <div>
+          <a class="logo footer-logo" href="index.html">Kalyan<span>Setu</span></a>
+          <p class="footer-quote">Serving Nourishment, Building Connection</p>
+          <p>A for-profit social impact company committed to making good food accessible to everyone.</p>
+          <small>© 2024 KalyanSetu. All rights reserved.</small>
+        </div>
+        <div>
+          <div class="footer-title">NAVIGATE</div>
+          <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="founder.html">Founder</a>
+            <a href="people.html">Who We Serve</a>
+            <a href="progress.html">Progress</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-title">CONNECT</div>
+          <div class="footer-links">
+            <span>Founder: Divyansh Rai</span>
+            <span>Instagram · LinkedIn · Twitter-X</span>
+            <span>Newsletter</span>
+            <form onsubmit="event.preventDefault();">
+              <input aria-label="Email address" type="email" placeholder="Your email" required>
+              <button class="btn btn-primary" type="submit">Subscribe →</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="footer-quote">Good food is not a luxury, it is a right.</span>
+        <span>
+          <a href="contact.html">Privacy Policy</a> ·
+          <a href="contact.html">Terms of Use</a> ·
+          <a href="contact.html">Contact</a>
+        </span>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>

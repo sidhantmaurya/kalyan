@@ -1,0 +1,6 @@
+{
+  "name": "KalyanSetu - Affordable Food, Dignified Lives",
+  "description": "A for-profit social impact initiative making nutritious, affordable meals accessible to students, workers, drivers, and low-income families across India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
