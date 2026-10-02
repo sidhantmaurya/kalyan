@@ -1,0 +1,19 @@
+{
+  "name": "KalyanSetu - Affordable Food, Dignified Lives",
+  "short_name": "KalyanSetu",
+  "description": "Making nutritious, affordable meals accessible to students, workers, and low-income families across India.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101c33",
+  "theme_color": "#101c33",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "nonprofit", "food", "lifestyle"]
+}

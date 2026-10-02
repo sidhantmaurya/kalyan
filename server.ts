@@ -16,6 +16,7 @@
 import express from 'express';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
+import compression from 'compression';
 // @ts-ignore - db.js is an ES module
 import { db, dbOps } from './db.js';
 
@@ -25,6 +26,29 @@ function sanitizeText(input: unknown): string {
   return input
     .replace(/[<>]/g, '') // strip opening/closing brackets
     .trim();
+}
+
+// Firebase Firestore REST Helper (Mirrors authentication, contact, and subscription data)
+const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/organic-vortex-mmzf6/databases/ai-studio-kalyansetuafford-80e79169-f378-46d8-8b00-c444a00f1969/documents';
+const FIRESTORE_KEY = 'AIzaSyAj9Uky0ktuMZNccvGmv1WUMakvAVKw_uw';
+
+async function syncToFirestore(collection: string, docId: string, fields: Record<string, string>) {
+  try {
+    const formattedFields: Record<string, { stringValue: string }> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined && value !== null) {
+        formattedFields[key] = { stringValue: String(value) };
+      }
+    }
+    const url = `${FIRESTORE_BASE}/${collection}?documentId=${encodeURIComponent(docId)}&key=${FIRESTORE_KEY}`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: formattedFields })
+    });
+  } catch (err) {
+    console.warn(`[Firebase Sync] Failed to sync ${collection}/${docId}:`, err);
+  }
 }
 
 async function startServer() {
@@ -42,6 +66,9 @@ async function startServer() {
       next();
     });
   }
+
+  // Gzip / Brotli Compression for High Performance
+  app.use(compression());
 
   // 2. CORS Middleware
   app.use((req, res, next) => {
@@ -78,7 +105,21 @@ async function startServer() {
     next();
   });
 
-  // 4. In-Memory API Rate Limiter
+  // 4. Request Logging & Observability Middleware
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      const timestamp = new Date().toISOString();
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || '-';
+      if (req.path.startsWith('/api') || res.statusCode >= 400) {
+        console.log(`[${timestamp}] ${req.method} ${req.originalUrl} ${res.statusCode} (${duration}ms) - ${ip}`);
+      }
+    });
+    next();
+  });
+
+  // 5. In-Memory API Rate Limiter
   const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
   const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; // 15 mins
   const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
@@ -121,28 +162,42 @@ async function startServer() {
   // 6. API Endpoints
   // ==========================================================
 
-  // HEALTH CHECK: Returns uptime, memory, and database status
-  app.get('/api/health', (_req, res) => {
-    let dbHealthy = false;
+  // HEALTH CHECK: Returns uptime, memory, SQLite status, and Firebase Firestore status
+  app.get('/api/health', async (_req, res) => {
+    let sqliteHealthy = false;
     try {
       db.prepare('SELECT 1').get();
-      dbHealthy = true;
+      sqliteHealthy = true;
     } catch {
-      dbHealthy = false;
+      sqliteHealthy = false;
     }
 
-    res.json({
-      status: dbHealthy ? 'healthy' : 'degraded',
+    let firestoreHealthy = false;
+    try {
+      const pingUrl = `${FIRESTORE_BASE}?pageSize=1&key=${FIRESTORE_KEY}`;
+      const pingRes = await fetch(pingUrl, { method: 'GET' });
+      firestoreHealthy = pingRes.status < 500;
+    } catch {
+      firestoreHealthy = false;
+    }
+
+    const overallHealthy = sqliteHealthy && firestoreHealthy;
+
+    res.status(overallHealthy ? 200 : 207).json({
+      status: overallHealthy ? 'healthy' : 'degraded',
       service: 'KalyanSetu Backend',
       environment: isProduction ? 'production' : 'development',
       uptimeSeconds: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
-      database: dbHealthy ? 'connected' : 'disconnected',
+      databases: {
+        sqlite: sqliteHealthy ? 'connected' : 'disconnected',
+        firestore: firestoreHealthy ? 'connected' : 'disconnected'
+      },
       memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
     });
   });
 
-  // SIGNUP ROUTE: Creates a new user with bcrypt password hashing
+  // SIGNUP ROUTE: Creates a new user with bcrypt password hashing & stores in SQLite and Firebase Firestore
   app.post('/api/auth/signup', async (req, res) => {
     try {
       const name = sanitizeText(req.body.name);
@@ -170,6 +225,22 @@ async function startServer() {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(password, salt);
       const newUser = dbOps.createUser(name, email, passwordHash);
+
+      // Store Signup Data in Firebase Firestore
+      const now = new Date().toISOString();
+      syncToFirestore('users', String(newUser.id), {
+        id: String(newUser.id),
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: now
+      });
+      syncToFirestore('auth_events', `signup_${newUser.id}_${Date.now()}`, {
+        userId: String(newUser.id),
+        email: newUser.email,
+        eventType: 'signup',
+        timestamp: now
+      });
 
       return res.status(201).json({
         success: true,
@@ -207,6 +278,22 @@ async function startServer() {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
 
+      // Sync Login Data to Firebase Firestore
+      const now = new Date().toISOString();
+      syncToFirestore('auth_events', `login_${user.id}_${Date.now()}`, {
+        userId: String(user.id),
+        email: user.email,
+        eventType: 'login',
+        timestamp: now
+      });
+      syncToFirestore('users', String(user.id), {
+        id: String(user.id),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLoginAt: now
+      });
+
       return res.json({
         success: true,
         message: 'Login successful!',
@@ -223,7 +310,30 @@ async function startServer() {
     }
   });
 
-  // CONTACT ROUTE: Persists messages to SQLite contacts table
+  // LOGOUT ROUTE: Records logout events in Firebase Firestore
+  app.post('/api/auth/logout', (req, res) => {
+    try {
+      const userId = sanitizeText(req.body.userId);
+      const email = sanitizeText(req.body.email).toLowerCase();
+      const now = new Date().toISOString();
+
+      if (userId && email) {
+        syncToFirestore('auth_events', `logout_${userId}_${Date.now()}`, {
+          userId,
+          email,
+          eventType: 'logout',
+          timestamp: now
+        });
+      }
+
+      return res.json({ success: true, message: 'Logged out successfully.' });
+    } catch (err) {
+      console.error('Logout error:', err);
+      return res.json({ success: true });
+    }
+  });
+
+  // CONTACT ROUTE: Persists messages to SQLite contacts table & Firebase Firestore
   app.post('/api/contact', (req, res) => {
     try {
       const name = sanitizeText(req.body.name);
@@ -251,6 +361,17 @@ async function startServer() {
 
       dbOps.saveContact(name, email, phone, reason, message);
 
+      // Sync Connect Data to Firebase Firestore
+      const contactId = `contact_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      syncToFirestore('contacts', contactId, {
+        name,
+        email,
+        phone: phone || '',
+        reason: reason || 'General',
+        message,
+        createdAt: new Date().toISOString()
+      });
+
       return res.status(201).json({
         success: true,
         message: 'Thank you! Your message has been saved and forwarded to Divyansh.'
@@ -261,7 +382,7 @@ async function startServer() {
     }
   });
 
-  // NEWSLETTER ROUTE: Persists subscriber emails to SQLite subscribers table
+  // NEWSLETTER ROUTE: Persists subscriber emails to SQLite & Firebase Firestore
   app.post('/api/newsletter', (req, res) => {
     try {
       const email = sanitizeText(req.body.email).toLowerCase();
@@ -272,6 +393,13 @@ async function startServer() {
       }
 
       dbOps.saveSubscriber(email);
+
+      // Sync Subscribe Data to Firebase Firestore
+      const subscriberId = `sub_${email.replace(/[^a-z0-9]/g, '_')}`;
+      syncToFirestore('subscribers', subscriberId, {
+        email,
+        createdAt: new Date().toISOString()
+      });
 
       return res.status(201).json({
         success: true,

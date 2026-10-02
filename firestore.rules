@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation Helpers
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
+             data.keys().hasOnly(['id', 'name', 'email', 'role', 'createdAt', 'lastLoginAt', 'lastLogoutAt']) &&
+             data.id == userId &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 3 && data.email.size() <= 150 &&
+             data.role in ['supporter', 'volunteer', 'admin'];
+    }
+
+    function isValidAuthEvent(data) {
+      return data.keys().hasAll(['userId', 'email', 'eventType', 'timestamp']) &&
+             data.keys().hasOnly(['userId', 'email', 'eventType', 'timestamp']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.eventType in ['login', 'logout', 'signup'] &&
+             data.timestamp is string && data.timestamp.size() <= 100;
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll(['name', 'email', 'message']) &&
+             data.keys().hasOnly(['name', 'email', 'phone', 'reason', 'message', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 3 && data.email.size() <= 150 &&
+             data.message is string && data.message.size() > 0 && data.message.size() <= 2000;
+    }
+
+    function isValidSubscriber(data) {
+      return data.keys().hasAll(['email']) &&
+             data.keys().hasOnly(['email', 'createdAt']) &&
+             data.email is string && data.email.size() > 3 && data.email.size() <= 150;
+    }
+
+    // Users Collection (PII Isolated & Protected)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || resource.data.email == request.auth.token.email);
+      allow list: if false;
+      allow create: if isValidId(userId) && isValidUser(incoming(), userId);
+      allow update: if isValidId(userId) && isValidUser(incoming(), userId) &&
+                       incoming().id == existing().id &&
+                       incoming().email == existing().email &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'role', 'lastLoginAt', 'lastLogoutAt']);
+      allow delete: if false;
+    }
+
+    // Authentication Audit Events (Login / Logout Records, Write-only append)
+    match /auth_events/{eventId} {
+      allow create: if isValidId(eventId) && isValidAuthEvent(incoming());
+      allow read, update, delete: if false;
+    }
+
+    // Contacts / Connect Collection (Public inquiries, Write-only)
+    match /contacts/{contactId} {
+      allow create: if isValidId(contactId) && isValidContact(incoming());
+      allow read, update, delete: if false;
+    }
+
+    // Newsletter Subscribers (Write-only)
+    match /subscribers/{subscriberId} {
+      allow create: if isValidId(subscriberId) && isValidSubscriber(incoming());
+      allow read, update, delete: if false;
+    }
+  }
+}

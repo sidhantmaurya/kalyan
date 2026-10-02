@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile for KalyanSetu supporters and volunteers",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique Firebase Auth user ID",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of user",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address of user",
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "description": "Role in community (e.g. supporter, volunteer)",
+          "enum": ["supporter", "volunteer", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Timestamp of most recent login"
+        },
+        "lastLogoutAt": {
+          "type": "string",
+          "description": "Timestamp of most recent logout"
+        }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "AuthEvent": {
+      "title": "AuthEvent",
+      "description": "Audit record for user login and logout activities",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "ID of user logging in or out",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address",
+          "maxLength": 150
+        },
+        "eventType": {
+          "type": "string",
+          "description": "Type of authentication event",
+          "enum": ["login", "logout", "signup"]
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Event timestamp in ISO format"
+        }
+      },
+      "required": ["userId", "email", "eventType", "timestamp"]
+    },
+    "ContactInquiry": {
+      "title": "ContactInquiry",
+      "description": "Inquiry or partnership request submitted via KalyanSetu contact form",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Sender name",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Sender email",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number",
+          "maxLength": 30
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for contacting",
+          "maxLength": 50
+        },
+        "message": {
+          "type": "string",
+          "description": "Message content",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Submission timestamp"
+        }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "Newsletter subscriber email",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Subscriber email address",
+          "maxLength": 150
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Subscription timestamp"
+        }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Supporter profile documents isolated by authenticated user ID"
+    },
+    "/auth_events/{eventId}": {
+      "schema": "AuthEvent",
+      "description": "Authentication audit events tracking user logins and logouts"
+    },
+    "/contacts/{contactId}": {
+      "schema": "ContactInquiry",
+      "description": "Public connect inquiries and partnership submissions"
+    },
+    "/subscribers/{subscriberId}": {
+      "schema": "Subscriber",
+      "description": "Email newsletter subscribers list"
+    }
+  }
+}

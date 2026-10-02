@@ -1,20 +1,41 @@
 /**
- * Database Module for KalyanSetu
+ * Database Module for KalyanSetu (Production Ready)
  * Uses Node.js 22 built-in SQLite engine (node:sqlite)
- * Automatically initializes tables on startup:
- *  - users: user accounts with hashed passwords
- *  - contacts: messages sent via the contact form
- *  - subscribers: emails subscribed to newsletter updates
+ *
+ * Enhancements:
+ *  - Configurable DB_PATH (supports Docker volumes & persistent cloud disks)
+ *  - WAL (Write-Ahead Logging) mode for fast, concurrent production reads & writes
+ *  - Performance indexes for rapid lookups
+ *  - Safe SQLite backup function
  */
 
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
+import fs from 'node:fs';
 
-// Database file stored locally in project root
-const dbPath = path.resolve(process.cwd(), 'kalyansetu.db');
+// Configurable database path via environment variable (default: ./kalyansetu.db)
+const dbPath = process.env.DB_PATH 
+  ? path.resolve(process.cwd(), process.env.DB_PATH)
+  : path.resolve(process.cwd(), 'kalyansetu.db');
+
+// Ensure database parent directory exists
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 export const db = new DatabaseSync(dbPath);
 
-// Create required tables if they don't already exist
+// Enable Write-Ahead Logging & Normal Synchronous for high production throughput
+try {
+  db.exec('PRAGMA journal_mode = WAL;');
+  db.exec('PRAGMA synchronous = NORMAL;');
+  db.exec('PRAGMA foreign_keys = ON;');
+} catch (e) {
+  console.warn('SQLite PRAGMA setup note:', e);
+}
+
+// Create required tables with performance indexes
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,9 +61,14 @@ db.exec(`
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  -- Production Performance Indexes
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at);
+  CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
 `);
 
-console.log('✓ SQLite database initialized successfully at:', dbPath);
+console.log('✓ SQLite database initialized successfully with WAL & indexes at:', dbPath);
 
 /**
  * Helper Database Operations
@@ -91,5 +117,20 @@ export const dbOps = {
       VALUES (?)
     `);
     return insert.run(email.trim().toLowerCase());
+  },
+
+  // Create an on-demand snapshot backup of the SQLite database
+  createBackup() {
+    const backupDir = path.resolve(process.cwd(), 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const destination = path.join(backupDir, `kalyansetu-backup-${timestamp}.db`);
+    
+    // Copy the database file safely
+    fs.copyFileSync(dbPath, destination);
+    console.log(`✓ Database backup snapshot created at: ${destination}`);
+    return destination;
   }
 };

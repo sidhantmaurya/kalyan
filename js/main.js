@@ -220,6 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutBtn.style.fontSize = '12px';
         logoutBtn.textContent = 'Logout';
         logoutBtn.addEventListener('click', () => {
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, email: user.email })
+          }).catch(() => {});
           localStorage.removeItem('ks_user');
           updateAuthUI();
         });
@@ -250,6 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         drawerSlot.querySelector('button')?.addEventListener('click', () => {
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, email: user.email })
+          }).catch(() => {});
           localStorage.removeItem('ks_user');
           updateAuthUI();
           closeDrawer();

@@ -1,0 +1,28 @@
+# Render Infrastructure as Code Blueprint
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: kalyansetu
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DB_PATH
+        value: /var/data/kalyansetu.db
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: SESSION_SECRET
+        generateValue: true
+    disk:
+      name: kalyansetu-sqlite-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#101c33" />
+      <stop offset="100%" stop-color="#1d3056" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2bf55" />
+      <stop offset="100%" stop-color="#c9a227" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-opacity="0.4" />
+
+  <!-- KalyanSetu Bridge & Bowl Symbol (Gold) -->
+  <!-- Bowl / Thali Foundation -->
+  <path d="M14 36 C14 47 22 51 32 51 C42 51 50 47 50 36 Z" fill="url(#goldGrad)" opacity="0.9" />
+  
+  <!-- Bridge Arch Structure (Setu) -->
+  <path d="M18 36 C22 26 42 26 46 36" fill="none" stroke="#fdfbf7" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- Sun / Warmth / Nutrition Dawn Rays -->
+  <circle cx="32" cy="23" r="5" fill="url(#goldGrad)" />
+  <line x1="32" y1="13" x2="32" y2="16" stroke="url(#goldGrad)" stroke-width="2" stroke-linecap="round" />
+  <line x1="22" y1="17" x2="24" y2="19" stroke="url(#goldGrad)" stroke-width="2" stroke-linecap="round" />
+  <line x1="42" y1="17" x2="40" y2="19" stroke="url(#goldGrad)" stroke-width="2" stroke-linecap="round" />
+</svg>
