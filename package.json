@@ -1,14 +1,15 @@
 {
-  "name": "react-example",
+  "name": "kalyansetu",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "KalyanSetu - Affordable Food, Dignified Lives",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
-    "start": "tsx server.ts",
+    "dev": "NODE_ENV=development tsx server.ts",
     "build": "vite build",
+    "start": "node server.ts",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
